@@ -13,6 +13,8 @@ import datetime
 
 def main():
     while True:
+        
+        # Fake wait time.
         time.sleep(random.randint(5, 7))
         # Publish message
         print("Publishing message.")
