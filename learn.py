@@ -20,33 +20,13 @@ else:
     print("Windows or Linux detected... Importing standard Tensorflow.")
 
 """
-Selector Classes:
-These selector functions will point to the model and data you want to use.
-You can create these functions in the model and data libraries below and
-point those functions here.
-"""
-class Model():
-    # Initialization function.
-    def __init__(self):
-        # Define the model here.
-        self.model = LSTM()
-        # Define the data here.
-        pass
-
-    # Carries out training.
-    def train(self, data):
-        pass
-
-class Data():
-    # Initialization function takes and parses data into training and test.
-    def __init__(self):
-        data = TweetData()
-    pass
-
-"""
 Global Variables:
-Define any global variables needed by 
+Define any global variables needed by your scenarios.
 """
+
+# All scenarios.
+TRAIN_TEST_VAL_SPLIT = (0.6, 0.2, 0.2)
+
 # Test Twitter-LSTM Scenario
 SEQ_LEN = 2 # Number of preceeding words before next word.
 DATA_FILE = "data/test_data.txt"
@@ -107,12 +87,63 @@ def TweetData(data_file, encoder):
         # Grab previous words and next words.
         prev_words = sequence[:-1]
         next_word = sequence[-1]
-        print(prev_words, next_word)
+        # Do the actual encoding (each row represents a next word or a set of previous words).
+        for j, prev_word in enumerate(prev_words):
+            X[i, j, encoder[prev_word]] = 1
+        y[i, encoder[next_word]] = 1
+    
+    # Return X and y.
+    return X, y
 
 
+"""
+Selector Classes:
+These selector functions will point to the model and data you want to use.
+You can create these functions in the model and data libraries below and
+point those functions here.
+"""
+class Model():
+    # Initialization function.
+    def __init__(self):
+        # Define the model here.
+        self.model = LSTM()
+        # Define the data here.
+        pass
 
+    # Carries out training.
+    def train(self, data):
+        pass
+
+class Data():
+    # Initialization function takes and parses data into training and test.
+    def __init__(self):
+        # Store data from generator function. <--- This is where to change your data.
+        self.data = TweetData(DATA_FILE, ENCODER)
+        # Split the data.
+        self.split()
+        
+    # Function to split data.
+    def split(self):
+        # Cut up the indices.
+        total = len(self.data[1])
+        fractions = (sum(TRAIN_TEST_VAL_SPLIT[:1]), sum(TRAIN_TEST_VAL_SPLIT[:2]), sum(TRAIN_TEST_VAL_SPLIT))
+        if fractions[-1] > 1:
+            raise IndexError("Check TRAIN_TEST_VAL_SPLIT and ensure proper ratios.")
+        splits = (np.array(fractions) * total)
+        splits = [int(x) for x in splits]
+        print("Splits:", splits)
+        # Store the dataset splits.
+        self.training_data = (self.data[0][:splits[0]], self.data[1][:splits[0]])
+        self.validation_data = (self.data[0][splits[0]:splits[1]], self.data[0][splits[0]:splits[1]])
+        self.testing_data = (self.data[0][splits[1]:splits[2]], self.data[0][splits[1]:splits[2]])
+        
+
+    pass
     
 
 # Main function to test.
 if __name__ == "__main__":
-    TweetData(DATA_FILE, ENCODER)
+    data = Data()
+    print(len(data.training_data[0]))
+    print(len(data.validation_data[0]))
+    print(len(data.testing_data[0]))
