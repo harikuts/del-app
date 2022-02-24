@@ -12,9 +12,10 @@ if sys.platform == 'darwin':
     try:
         tf = __import__("tensorflow-macos")
         print("Imported Tensorflow (Metal) for MacOS.")
-    except ImportError:
+    except ImportError as e:
         import tensorflow as tf
         print("Could not import Tensorflow (Metal). Importing standard Tensorflow.")
+        print(e)
 else:
     import tensorflow as tf
     print("Windows or Linux detected... Importing standard Tensorflow.")
@@ -26,6 +27,8 @@ Define any global variables needed by your scenarios.
 
 # All scenarios.
 TRAIN_TEST_VAL_SPLIT = (0.6, 0.2, 0.2)
+NUM_EPOCHS = 10
+BATCH_SIZE = 128
 
 # Test Twitter-LSTM Scenario
 SEQ_LEN = 2 # Number of preceeding words before next word.
@@ -38,7 +41,7 @@ VOCAB_SIZE = len(ENCODER) # Number of total words, which is mapped by the encode
 Model Library:
 In this section, you can create models to use in your selector functions.
 """
-def LSTM(vocab_size):
+def LSTM():
     # Variables
     vocab_size = VOCAB_SIZE
     # Model
@@ -112,7 +115,7 @@ class Model():
 
     # Carries out training.
     def train(self, data):
-        pass
+        history = self.model.fit(data[0], data[1], epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, shuffle=False)
 
 class Data():
     # Initialization function takes and parses data into training and test.
@@ -144,6 +147,5 @@ class Data():
 # Main function to test.
 if __name__ == "__main__":
     data = Data()
-    print(len(data.training_data[0]))
-    print(len(data.validation_data[0]))
-    print(len(data.testing_data[0]))
+    model = Model()
+    model.train(data.training_data)
