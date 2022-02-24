@@ -108,9 +108,13 @@ point those functions here.
 """
 class Model():
     # Initialization function.
-    def __init__(self):
-        # Define the model here.
-        self.model = LSTM()
+    def __init__(self, load_file=None):
+        # Define the model here. It's only called when a prior model does not exist.
+        if load_file is None:
+            self.model = LSTM()
+        # If a load file has been given, load model from the file.
+        else:
+            self.load(load_file)
         # Define the data here.
         pass
 
@@ -120,11 +124,11 @@ class Model():
 
     # Method to save model.
     def save(self, filename):
-        self.model.save_weights(filename)
+        self.model.save(filename)
 
     # Method to load model.
     def load(self, filename):
-        self.model.load_weights(filename)
+        self.model = tf.keras.models.load_model(filename)
 
 class Data():
     # Initialization function takes and parses data into training and test.
@@ -158,8 +162,8 @@ if __name__ == "__main__":
     data = Data()
     model1 = Model()
     model1.train(data.training_data)
-    model1.save("model.tf")
+    model1.save("model.h5")
     model2 = Model()
-    model2.load("model.tf")
+    model2.load("model.h5")
     model2.train(data.training_data)
-    os.remove("model.tf")
+    os.remove("model.h5")
