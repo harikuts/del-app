@@ -5,6 +5,7 @@ Classes and methods that pertain to the learning process.
 import sys
 import pickle
 import numpy as np
+import os
 
 # Import OS-specific tensorflow.
 if sys.platform == 'darwin':
@@ -27,7 +28,7 @@ Define any global variables needed by your scenarios.
 
 # All scenarios.
 TRAIN_TEST_VAL_SPLIT = (0.6, 0.2, 0.2)
-NUM_EPOCHS = 10
+NUM_EPOCHS = 10 # Per training step.
 BATCH_SIZE = 128
 
 # Test Twitter-LSTM Scenario
@@ -117,6 +118,14 @@ class Model():
     def train(self, data):
         history = self.model.fit(data[0], data[1], epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, shuffle=False)
 
+    # Method to save model.
+    def save(self, filename):
+        self.model.save_weights(filename)
+
+    # Method to load model.
+    def load(self, filename):
+        self.model.load_weights(filename)
+
 class Data():
     # Initialization function takes and parses data into training and test.
     def __init__(self):
@@ -147,5 +156,10 @@ class Data():
 # Main function to test.
 if __name__ == "__main__":
     data = Data()
-    model = Model()
-    model.train(data.training_data)
+    model1 = Model()
+    model1.train(data.training_data)
+    model1.save("model.tf")
+    model2 = Model()
+    model2.load("model.tf")
+    model2.train(data.training_data)
+    os.remove("model.tf")
