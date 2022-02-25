@@ -8,7 +8,7 @@
 # ENV PYTHONUNBUFFERED=1
 
 # Get Linux image. (modified from the default VSCODE Python Dockerfile generation.)
-FROM debian:buster-slim
+FROM debian:buster
 # Non-interactive to prevent user input prompts.
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -20,6 +20,7 @@ RUN apt-get install -y bridge-utils iperf3
 
 # Install pip requirements.
 COPY requirements.txt .
+RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt
 
 WORKDIR /app

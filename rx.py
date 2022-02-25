@@ -10,6 +10,8 @@ from _thread import *
 import threading
 import os
 
+from logging import Log
+
 # File I/O information.
 NODELIST_FN = "nodelist.txt"
 STORED_FN = "model.h5"
@@ -22,7 +24,7 @@ DATASIZE = 1024
 
 rx_lock = threading.Lock()
 
-def rx_thread(conn, address):
+def rx_thread(conn, address, log):
     # Get stream of data.
     data_exists = False
     full_data = ""
@@ -37,15 +39,16 @@ def rx_thread(conn, address):
             data_exists = True
     # If there is data, print and store it.
     if data_exists:
-        print (f"({address[0]}) {(full_data[:5])}...", end=" ")
+        log.log(f"({address[0]}) {(full_data[:5])}...", end=" ")
         # Store in the inbox.
         store_path = os.path.join(INBOX_PATH, address[0], STORED_FN)
         with open(store_path, 'wb') as f:
             f.write(full_data)
-        print (f"--> {store_path}")
+        log.log(f"--> {store_path}")
     conn.close()
 
 def main():
+    log = Log("RX", os.path.join(os.getcwd(), "logs", "rx.log"))
     # Get information from nodelist.
     with open(NODELIST_FN, 'r') as f:
         nodelist = f.read().strip().split()
@@ -66,9 +69,9 @@ def main():
         # Accept a connection.
         conn, address = s.accept()
         rx_lock.acquire()
-        print(f"Connected to {address[0]}!")
-        # Dispatch the thread
-        start_new_thread(rx_thread, (conn, address,))
+        log.log(f"Connected to {address[0]}!")
+        # Dispatch the thread.
+        start_new_thread(rx_thread, (conn, address, log,))
     s.close()
 
         
