@@ -111,7 +111,7 @@ class Model():
     def __init__(self, load_file=None):
         # Define the model here. It's only called when a prior model does not exist.
         if load_file is None:
-            self.model = LSTM()
+            self.model = LSTM() # <--- Change your model here.
         # If a load file has been given, load model from the file.
         else:
             self.load(load_file)

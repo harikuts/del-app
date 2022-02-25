@@ -12,7 +12,7 @@ import os
 
 # File I/O information.
 NODELIST_FN = "nodelist.txt"
-STORED_FN = "message.txt"
+STORED_FN = "model.h5"
 CUR_DIR = os.getcwd()
 INBOX_PATH = os.path.join(CUR_DIR, "inbox")
 
@@ -37,10 +37,10 @@ def rx_thread(conn, address):
             data_exists = True
     # If there is data, print and store it.
     if data_exists:
-        print (f"({address[0]}) {full_data.strip()}", end=" ")
+        print (f"({address[0]}) {(full_data[:5])}...", end=" ")
         # Store in the inbox.
         store_path = os.path.join(INBOX_PATH, address[0], STORED_FN)
-        with open(store_path, 'w') as f:
+        with open(store_path, 'wb') as f:
             f.write(full_data)
         print (f"--> {store_path}")
     conn.close()

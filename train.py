@@ -10,18 +10,21 @@ import os
 import time
 import random
 import datetime
+# Import the learning package.
+from learn import Model, Data
 
 def main():
     while True:
         
-        # Fake wait time.
-        time.sleep(random.randint(5, 7))
-        # Publish message
-        print("Publishing message.")
-        message = f"Hello. -- {datetime.datetime.now()}\n"
-        message_path = os.path.join(os.getcwd(), "outbox", "message.txt")
-        with open(message_path, 'w') as f:
-            f.write(message)
+        # Load the model.
+        model = Model("model.h5")
+        # Train the model.
+        model.train(Data().training_data)
+        # Publish message to both the outbox and the current model.
+        print("Publishing model.")
+        model_path = os.path.join(os.getcwd(), "outbox", "model.h5")
+        model.save("model.h5")
+        model.save(model_path)
 
 if __name__ == "__main__":
     main()
