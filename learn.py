@@ -7,19 +7,14 @@ import pickle
 import numpy as np
 import os
 
-# Import OS-specific tensorflow.
-if sys.platform == 'darwin':
-    print("OSX detected... ", end='')
-    try:
-        tf = __import__("tensorflow-macos")
-        print("Imported Tensorflow (Metal) for MacOS.")
-    except ImportError as e:
-        import tensorflow as tf
-        print("Could not import Tensorflow (Metal). Importing standard Tensorflow.")
-        print(e)
-else:
-    import tensorflow as tf
-    print("Windows or Linux detected... Importing standard Tensorflow.")
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+import numpy as np
+import argparse
+# import tensorflow
 
 """
 Global Variables:
@@ -42,7 +37,7 @@ VOCAB_SIZE = len(ENCODER) # Number of total words, which is mapped by the encode
 Model Library:
 In this section, you can create models to use in your selector functions.
 """
-def LSTM():
+def tf_LSTM():
     # Variables
     vocab_size = VOCAB_SIZE
     # Model
@@ -100,18 +95,104 @@ def TweetData(data_file, encoder):
     return X, y
 
 
+
 """
 Selector Classes:
 These selector functions will point to the model and data you want to use.
 You can create these functions in the model and data libraries below and
 point those functions here.
 """
-class Model():
+# SELECTOR MODEL AND DATA - METHODS SHOULD CALL PYTORCH OR TENSORFLOW MODEL/DATA CLASSES.
+
+# PYTORCH MODEL AND DATA.
+
+# Model: Basic 4-layer neural network for processing 28x28 input data.
+class SimpleModel_MNIST(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, dropout=0.5):
+        super(SimpleModel_MNIST, self).__init__()
+        self.input_size, self.output_size = input_size, output_size
+        # Create a simple 4-layer neural network with dense layers.
+        self.nn = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size),
+        )
+    def forward(self, x):
+        x = torch.reshape(x, (-1, self.input_size))
+        output = self.nn(x)
+        return output
+
+class torch_Model():
     # Initialization function.
     def __init__(self, load_file=None):
+        if load_file is None:
+            # Call the model here.
+            self.model = SimpleModel_MNIST(28*28, 256, 10)
+        else:
+            # If load file is provided, load model from there. (STILL NEEDS TO BE IMPLEMENTED.)
+            pass
+        # Loss function and optimizer variables.
+        self.loss_function = nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3)
+
+
+    # Training function.
+    def train(self, data:DataLoader):
+        size = len(data.dataset)
+        for i, (X, y) in enumerate(data):
+            # X, y = X.to_device(), y.to_device()
+            # Get prediction.
+            pred = self.model(X)
+            # Compute loss.
+            loss = self.loss_function(pred, y)
+            # Back propagation.
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            # Print progress updates at every 10%.
+            if i % (len(data)//10) == 0:
+                loss, current = loss.item(), i * len(X)
+                print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
+
+    # Testing function.
+    def test(self, data:DataLoader):
+        size = len(data.dataset)
+        num_batches = len(data)
+        self.model.eval()
+        test_loss, correct = 0, 0
+        with torch.no_grad():
+            for X, y in data:
+                # X, y = X.to(device), y.to(device)
+                pred = self.model(X)
+                test_loss += self.loss_function(pred, y).item()
+                correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+        test_loss /= num_batches
+        correct /= size
+        print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg. loss: {test_loss:>8f} \n")
+        return test_loss, correct
+
+    def save(self):
+        pass
+
+    def load(self):
+        pass
+
+    def aggregate(self):
+        pass
+
+# TENSORFLOW MODEL AND DATA - WARNING: AGGREGATION METHOD NOT COMPLETE.
+
+class tf_Model():
+    # Initialization function.
+    def __init__(self, model_generator, load_file=None):
         # Define the model here. It's only called when a prior model does not exist.
         if load_file is None:
-            self.model = LSTM() # <--- Change your model here.
+            # Call the pass thru model generator function.
+            self.model = model_generator()
         # If a load file has been given, load model from the file.
         else:
             self.load(load_file)
@@ -130,7 +211,12 @@ class Model():
     def load(self, filename):
         self.model = tf.keras.models.load_model(filename)
 
-class Data():
+class torch_Model():
+    # Initialization function.
+    def __init__(self, load_file=None):
+        pass
+
+class tf_Data():
     # Initialization function takes and parses data into training and test.
     def __init__(self):
         # Store data from generator function. <--- This is where to change your data.
@@ -159,11 +245,13 @@ class Data():
 
 # Main function to test.
 if __name__ == "__main__":
-    data = Data()
-    model1 = Model()
+
+    # TENSORFLOW TEST CODE.
+    data = tf_Data()
+    model1 = tf_Model(tf_LSTM)
     model1.train(data.training_data)
     model1.save("model.h5")
-    model2 = Model()
+    model2 = tf_Model()
     model2.load("model.h5")
     model2.train(data.training_data)
     os.remove("model.h5")
