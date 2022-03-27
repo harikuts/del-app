@@ -26,12 +26,12 @@ TRAIN_TEST_VAL_SPLIT = (0.6, 0.2, 0.2)
 NUM_EPOCHS = 10 # Per training step.
 BATCH_SIZE = 128
 
-# Test Twitter-LSTM Scenario
-SEQ_LEN = 2 # Number of preceeding words before next word.
-DATA_FILE = "data/test_data.txt"
-ENCODER_FILE = "data/encoder.pkl"
-ENCODER = pickle.load(open(ENCODER_FILE, 'rb'))
-VOCAB_SIZE = len(ENCODER) # Number of total words, which is mapped by the encoder.
+# # Test Twitter-LSTM Scenario
+# SEQ_LEN = 2 # Number of preceeding words before next word.
+# DATA_FILE = "data/test_data.txt"
+# ENCODER_FILE = "data/encoder.pkl"
+# ENCODER = pickle.load(open(ENCODER_FILE, 'rb'))
+# VOCAB_SIZE = len(ENCODER) # Number of total words, which is mapped by the encoder.
 
 """
 Model Library:
@@ -106,40 +106,39 @@ point those functions here.
 
 # PYTORCH MODEL AND DATA.
 
-# Model: Basic 4-layer neural network for processing 28x28 input data.
-class SimpleModel_MNIST(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, dropout=0.5):
-        super(SimpleModel_MNIST, self).__init__()
-        self.input_size, self.output_size = input_size, output_size
-        # Create a simple 4-layer neural network with dense layers.
-        self.nn = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
-        )
-    def forward(self, x):
-        x = torch.reshape(x, (-1, self.input_size))
-        output = self.nn(x)
-        return output
 
+# Model class to interface with the application services.
 class torch_Model():
+    # Model: Basic 4-layer neural network for processing 28x28 input data.
+    class SimpleModel_MNIST(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size, dropout=0.5):
+            super(torch_Model.SimpleModel_MNIST, self).__init__()
+            self.input_size, self.output_size = input_size, output_size
+            # Create a simple 4-layer neural network with dense layers.
+            self.nn = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, output_size),
+            )
+        def forward(self, x):
+            x = torch.reshape(x, (-1, self.input_size))
+            output = self.nn(x)
+            return output
     # Initialization function.
     def __init__(self, load_file=None):
         if load_file is None:
             # Call the model here.
-            self.model = SimpleModel_MNIST(28*28, 256, 10)
+            self.model = self.SimpleModel_MNIST(28*28, 256, 10)
         else:
             # If load file is provided, load model from there. (STILL NEEDS TO BE IMPLEMENTED.)
             pass
         # Loss function and optimizer variables.
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3)
-
-
     # Training function.
     def train(self, data:DataLoader):
         size = len(data.dataset)
@@ -157,7 +156,6 @@ class torch_Model():
             if i % (len(data)//10) == 0:
                 loss, current = loss.item(), i * len(X)
                 print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
-
     # Testing function.
     def test(self, data:DataLoader):
         size = len(data.dataset)
@@ -174,84 +172,120 @@ class torch_Model():
         correct /= size
         print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg. loss: {test_loss:>8f} \n")
         return test_loss, correct
-
+    # Save the model weights.
     def save(self):
         pass
-
+    # Load the model weights.
     def load(self):
         pass
-
+    # Aggregate other model weights with this one.
     def aggregate(self):
         pass
 
+# Dataset class.
+class torch_MNIST:
+    # Custom dataset class to use with PyTorch.
+    class torch_dataset(Dataset):
+        def __init__(self, data):
+            self.features = data[0]
+            self.targets = data[1]
+        def __len__(self):
+            return len(self.features)
+        def __getitem__(self, i):
+            return self.features[i], self.targets[i]
+    # Initialization.
+    def __init__(self, filename:str, split=0.8):
+        print(f"Loading file from: {filename}")
+        # File contains pickled list of tuples (feature vector, label).
+        with open(filename, 'rb') as f:
+            data = pickle.load(f)
+        # Set the point to split the data.
+        split_point = int(split * len(data))
+        # Initialize arrays.
+        train_X, train_y, test_X, test_y = [], [], [], []
+        # Go through each data point and add to train or test.
+        for i, datum in enumerate(data):
+            if i < split_point:
+                train_X.append(datum[0])
+                train_y.append(datum[1])
+            else:
+                test_X.append(datum[0])
+                test_y.append(datum[1])
+        # Convert arrays to tensors.
+        train_X = torch.stack(train_X, dim=1)[0]
+        train_y = torch.Tensor(train_y).type(torch.LongTensor)
+        test_X = torch.stack(test_X, dim=1)[0]
+        test_y = torch.Tensor(test_y).type(torch.LongTensor)
+        # Create datasets.
+        self.train_dataset = self.torch_dataset((train_X, train_y))
+        self.test_dataset = self.torch_dataset((test_X, test_y))
+        # Create dataloaders.
+        self.train_dataloader = DataLoader(self.train_dataset, batch_size=32, shuffle=True)
+        self.test_dataloader = DataLoader(self.test_dataset, batch_size=32, shuffle=True)
+
 # TENSORFLOW MODEL AND DATA - WARNING: AGGREGATION METHOD NOT COMPLETE.
 
-class tf_Model():
-    # Initialization function.
-    def __init__(self, model_generator, load_file=None):
-        # Define the model here. It's only called when a prior model does not exist.
-        if load_file is None:
-            # Call the pass thru model generator function.
-            self.model = model_generator()
-        # If a load file has been given, load model from the file.
-        else:
-            self.load(load_file)
-        # Define the data here.
-        pass
+# class tf_Model():
+#     # Initialization function.
+#     def __init__(self, model_generator, load_file=None):
+#         # Define the model here. It's only called when a prior model does not exist.
+#         if load_file is None:
+#             # Call the pass thru model generator function.
+#             self.model = model_generator()
+#         # If a load file has been given, load model from the file.
+#         else:
+#             self.load(load_file)
+#         # Define the data here.
+#         pass
+#     # Carries out training.
+#     def train(self, data):
+#         history = self.model.fit(data[0], data[1], epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, shuffle=False)
+#     # Method to save model.
+#     def save(self, filename):
+#         self.model.save(filename)
+#     # Method to load model.
+#     def load(self, filename):
+#         self.model = tf.keras.models.load_model(filename)
 
-    # Carries out training.
-    def train(self, data):
-        history = self.model.fit(data[0], data[1], epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, shuffle=False)
-
-    # Method to save model.
-    def save(self, filename):
-        self.model.save(filename)
-
-    # Method to load model.
-    def load(self, filename):
-        self.model = tf.keras.models.load_model(filename)
-
-class torch_Model():
-    # Initialization function.
-    def __init__(self, load_file=None):
-        pass
-
-class tf_Data():
-    # Initialization function takes and parses data into training and test.
-    def __init__(self):
-        # Store data from generator function. <--- This is where to change your data.
-        self.data = TweetData(DATA_FILE, ENCODER)
-        # Split the data.
-        self.split()
-        
-    # Function to split data.
-    def split(self):
-        # Cut up the indices.
-        total = len(self.data[1])
-        fractions = (sum(TRAIN_TEST_VAL_SPLIT[:1]), sum(TRAIN_TEST_VAL_SPLIT[:2]), sum(TRAIN_TEST_VAL_SPLIT))
-        if fractions[-1] > 1:
-            raise IndexError("Check TRAIN_TEST_VAL_SPLIT and ensure proper ratios.")
-        splits = (np.array(fractions) * total)
-        splits = [int(x) for x in splits]
-        print("Splits:", splits)
-        # Store the dataset splits.
-        self.training_data = (self.data[0][:splits[0]], self.data[1][:splits[0]])
-        self.validation_data = (self.data[0][splits[0]:splits[1]], self.data[0][splits[0]:splits[1]])
-        self.testing_data = (self.data[0][splits[1]:splits[2]], self.data[0][splits[1]:splits[2]])
-        
-
-    pass
-    
+# class tf_Data():
+#     # Initialization function takes and parses data into training and test.
+#     def __init__(self):
+#         # Store data from generator function. <--- This is where to change your data.
+#         self.data = TweetData(DATA_FILE, ENCODER)
+#         # Split the data.
+#         self.split()
+#     # Function to split data.
+#     def split(self):
+#         # Cut up the indices.
+#         total = len(self.data[1])
+#         fractions = (sum(TRAIN_TEST_VAL_SPLIT[:1]), sum(TRAIN_TEST_VAL_SPLIT[:2]), sum(TRAIN_TEST_VAL_SPLIT))
+#         if fractions[-1] > 1:
+#             raise IndexError("Check TRAIN_TEST_VAL_SPLIT and ensure proper ratios.")
+#         splits = (np.array(fractions) * total)
+#         splits = [int(x) for x in splits]
+#         print("Splits:", splits)
+#         # Store the dataset splits.
+#         self.training_data = (self.data[0][:splits[0]], self.data[1][:splits[0]])
+#         self.validation_data = (self.data[0][splits[0]:splits[1]], self.data[0][splits[0]:splits[1]])
+#         self.testing_data = (self.data[0][splits[1]:splits[2]], self.data[0][splits[1]:splits[2]])
+#     pass
 
 # Main function to test.
 if __name__ == "__main__":
 
     # TENSORFLOW TEST CODE.
-    data = tf_Data()
-    model1 = tf_Model(tf_LSTM)
-    model1.train(data.training_data)
-    model1.save("model.h5")
-    model2 = tf_Model()
-    model2.load("model.h5")
-    model2.train(data.training_data)
-    os.remove("model.h5")
+    # data = tf_Data()
+    # model1 = tf_Model(tf_LSTM)
+    # model1.train(data.training_data)
+    # model1.save("model.h5")
+    # model2 = tf_Model()
+    # model2.load("model.h5")
+    # model2.train(data.training_data)
+    # os.remove("model.h5")
+
+    # PYTORCH TEST CODE.
+    data = torch_MNIST("./data/test_client.data")
+    model = torch_Model()
+    for i in range(10):
+        model.train(data.train_dataloader)
+        model.test(data.test_dataloader)
