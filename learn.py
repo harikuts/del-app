@@ -102,10 +102,8 @@ These selector functions will point to the model and data you want to use.
 You can create these functions in the model and data libraries below and
 point those functions here.
 """
-# SELECTOR MODEL AND DATA - METHODS SHOULD CALL PYTORCH OR TENSORFLOW MODEL/DATA CLASSES.
 
 # PYTORCH MODEL AND DATA.
-
 
 # Model class to interface with the application services.
 class torch_Model():
@@ -129,13 +127,12 @@ class torch_Model():
             output = self.nn(x)
             return output
     # Initialization function.
-    def __init__(self, load_file=None):
-        if load_file is None:
-            # Call the model here.
-            self.model = self.SimpleModel_MNIST(28*28, 256, 10)
-        else:
-            # If load file is provided, load model from there. (STILL NEEDS TO BE IMPLEMENTED.)
-            pass
+    def __init__(self, load_path=None):
+        # Instantiate the model.
+        self.model = self.SimpleModel_MNIST(28*28, 256, 10)
+        if load_path is not None:
+            # If load file is provided, load model from there.
+            self.load(load_path)
         # Loss function and optimizer variables.
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3)
@@ -173,13 +170,16 @@ class torch_Model():
         print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg. loss: {test_loss:>8f} \n")
         return test_loss, correct
     # Save the model weights.
-    def save(self):
-        pass
+    def save(self, path:str):
+        torch.save(self.model.state_dict(), path)
     # Load the model weights.
-    def load(self):
-        pass
+    def load(self, path:str):
+        # Load weights from path.
+        weights = torch.load(path)
+        # Set model weights.
+        self.model.load_state_dict(weights)
     # Aggregate other model weights with this one.
-    def aggregate(self):
+    def aggregate(self, others:list[torch.Tensor]):
         pass
 
 # Dataset class.
@@ -222,6 +222,12 @@ class torch_MNIST:
         # Create dataloaders.
         self.train_dataloader = DataLoader(self.train_dataset, batch_size=32, shuffle=True)
         self.test_dataloader = DataLoader(self.test_dataset, batch_size=32, shuffle=True)
+
+# SELECTOR MODEL AND DATA - METHODS SHOULD CALL PYTORCH OR TENSORFLOW MODEL/DATA CLASSES.
+class Model(torch_Model):
+    pass
+class Data(torch_MNIST):
+    pass
 
 # TENSORFLOW MODEL AND DATA - WARNING: AGGREGATION METHOD NOT COMPLETE.
 
@@ -286,6 +292,17 @@ if __name__ == "__main__":
     # PYTORCH TEST CODE.
     data = torch_MNIST("./data/test_client.data")
     model = torch_Model()
+    # Train the model.
     for i in range(10):
+        print(f"Model 1 {i+1}\n-------------------------------")
         model.train(data.train_dataloader)
         model.test(data.test_dataloader)
+    # Save the model.
+    model.save("test_model.torch")
+    # Load a new model.
+    model_reborn = torch_Model("test_model.torch")
+    # Train the new model (should pick up where we left off).
+    for i in range(10):
+        print(f"Model 2 {i+1}\n-------------------------------")
+        model_reborn.train(data.train_dataloader)
+        model_reborn.test(data.test_dataloader)
