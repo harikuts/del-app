@@ -4,6 +4,7 @@ Classes and methods that pertain to the learning process.
 """
 import sys
 import pickle
+from typing import OrderedDict
 import numpy as np
 import os
 
@@ -179,8 +180,17 @@ class torch_Model():
         # Set model weights.
         self.model.load_state_dict(weights)
     # Aggregate other model weights with this one.
-    def aggregate(self, others:list[torch.Tensor]):
-        pass
+    def aggregate(self, other_weights:OrderedDict[str, torch.Tensor]):
+        # Got some help from: https://towardsdatascience.com/preserving-data-privacy-in-deep-learning-part-1-a04894f78029.
+        # Add this model's weights to list of weights.
+        other_weights.append(self.model.state_dict())
+        # Calculate mean per each key of the state dictionary.
+        these_weights = self.model.state_dict()
+        for k in these_weights:
+            # Compute the mean by creating a stack from input tensors and taking the mean.
+            these_weights[k] = torch.stack([state_dict[k] for state_dict in other_weights]).mean(0)
+        # Set this model's weights to the mean of all weights.
+        self.model.load_state_dict(these_weights)
 
 # Dataset class.
 class torch_MNIST:
@@ -290,6 +300,7 @@ if __name__ == "__main__":
     # os.remove("model.h5")
 
     # PYTORCH TEST CODE.
+    print("\nTESTING DATA AND MODEL...\n")
     data = torch_MNIST("./data/test_client.data")
     model = torch_Model()
     # Train the model.
@@ -298,6 +309,7 @@ if __name__ == "__main__":
         model.train(data.train_dataloader)
         model.test(data.test_dataloader)
     # Save the model.
+    print("\nTESTING SAVING AND LOADING...\n")
     model.save("test_model.torch")
     # Load a new model.
     model_reborn = torch_Model("test_model.torch")
@@ -306,3 +318,16 @@ if __name__ == "__main__":
         print(f"Model 2 {i+1}\n-------------------------------")
         model_reborn.train(data.train_dataloader)
         model_reborn.test(data.test_dataloader)
+    # Test the first and second models.
+    print("\nTESTING AGGREGATION...\n")
+    print("Model 1")
+    print(model.model.state_dict())
+    model.test(data.test_dataloader)
+    print("Model 2")
+    print(model_reborn.model.state_dict())
+    model_reborn.test(data.test_dataloader)
+    # Update the first model with aggregation with second model's weights.
+    model.aggregate([model_reborn.model.state_dict(),])
+    print(model.model.state_dict())
+    # Test the model.
+    model.test(data.test_dataloader)
