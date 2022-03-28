@@ -39,7 +39,7 @@ def main():
         log.log("Complete!")
 
     # Initialize the model.
-    Model().save(os.path.join(os.getcwd(), "outbox", "model.torch"))
+    Model().save(os.path.join(os.getcwd(), "model.torch"))
 
     log.log("Initialization complete!")
 

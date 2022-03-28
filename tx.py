@@ -14,11 +14,11 @@ import socket
 import random
 import os
 
-from logging import Log
+from simlog import Log
 
 CUR_DIR = os.getcwd()
 OUTBOX_PATH = os.path.join(CUR_DIR, "outbox")
-MESSAGE_PATH = os.path.join(OUTBOX_PATH, "model.h5")
+MESSAGE_PATH = os.path.join(OUTBOX_PATH, "model.torch")
 
 # Get hostnames
 with open(NODELIST_FN, 'r') as f:

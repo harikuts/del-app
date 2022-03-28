@@ -10,11 +10,11 @@ from _thread import *
 import threading
 import os
 
-from logging import Log
+from simlog import Log
 
 # File I/O information.
 NODELIST_FN = "nodelist.txt"
-STORED_FN = "model.h5"
+STORED_FN = "model.torch"
 CUR_DIR = os.getcwd()
 INBOX_PATH = os.path.join(CUR_DIR, "inbox")
 
@@ -27,9 +27,9 @@ rx_lock = threading.Lock()
 def rx_thread(conn, address, log):
     # Get stream of data.
     data_exists = False
-    full_data = ""
+    full_data = bytes()
     while True:
-        data = conn.recv(DATASIZE).decode()
+        data = conn.recv(DATASIZE)
         # Break if no more data is streaming.
         if not data:
             rx_lock.release()
@@ -39,7 +39,7 @@ def rx_thread(conn, address, log):
             data_exists = True
     # If there is data, print and store it.
     if data_exists:
-        log.log(f"({address[0]}) {(full_data[:5])}...", end=" ")
+        log.log(f"({address[0]}) {(full_data[:5])}...")
         # Store in the inbox.
         store_path = os.path.join(INBOX_PATH, address[0], STORED_FN)
         with open(store_path, 'wb') as f:

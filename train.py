@@ -18,7 +18,8 @@ from simlog import Log
 NUM_EPOCHS = 5
 
 DATA_PATH = "data/test_client.data"
-MODEL_PATH = os.path.join(os.getcwd(), "outbox", "model.torch")
+MODEL_PATH = os.path.join(os.getcwd(), "model.torch")
+OUT_MODEL_PATH = os.path.join(os.getcwd(), "outbox", "model.torch")
 log = Log("TRAIN", os.path.join(os.getcwd(), "logs", "train.log"))
 
 def main():
@@ -34,6 +35,7 @@ def main():
             # Publish message to both the outbox and the current model.
             log.log("\tPublishing model update...")
             model.save(MODEL_PATH)
+            model.save(OUT_MODEL_PATH)
         log.log("\tTraining done.")
         time.sleep(5)
 
