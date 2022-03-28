@@ -24,8 +24,6 @@ COPY requirements.txt .
 # RUN python3 -m pip install -r requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-# Run custom tensorflow for custom wheels for x86.
-RUN pip install tensorflow-cpu
 
 WORKDIR /app
 COPY . /app
@@ -38,4 +36,4 @@ RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /
 USER appuser
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD python init.py ; python train.py & python rx.py & python tx.py
+CMD python init.py ; python train.py

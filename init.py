@@ -5,26 +5,28 @@ other specific initialization processes.
 
 import os
 from learn import Model
+from simlog import Log
 
 NODELIST_FN = "nodelist.txt"
 
 def main():
-    print("Initializing...")
+    log = Log("INIT", os.path.join(os.getcwd(), "logs", "init.log"))
+    log.log("Initializing...")
 
     # Create all the necessary directories.
-    print("Building directories...")
+    log.log("Building directories...")
     # Get current directory.
     cur_dir = os.getcwd()
     # Create outbox.
     outbox_path = os.path.join(cur_dir, "outbox")
-    print(f"\tSetting {outbox_path}...", end=' ')
+    log.log(f"\tSetting {outbox_path}...")
     os.mkdir(outbox_path)
-    print("Complete!")
+    log.log("Complete!")
     # Create inbox.
     inbox_path = os.path.join(cur_dir, "inbox")
-    print(f"\tSetting {inbox_path}...", end=' ')
+    log.log(f"\tSetting {inbox_path}...")
     os.mkdir(inbox_path)
-    print("Complete!")
+    log.log("Complete!")
     # Get list of nodes.
     with open(NODELIST_FN, 'r') as f:
         nodelist = f.read().strip().split()
@@ -32,14 +34,14 @@ def main():
     for node in nodelist:
         # node = '_'.join(node.split('.'))
         node_path = os.path.join(inbox_path, node)
-        print(f"\tSetting {node_path}...", end=' ')
+        log.log(f"\tSetting {node_path}...")
         os.mkdir(node_path)
-        print("Complete!")
+        log.log("Complete!")
 
     # Initialize the model.
-    Model().save("model.h5")
+    Model().save(os.path.join(os.getcwd(), "outbox", "model.torch"))
 
-    print("Initialization complete!")
+    log.log("Initialization complete!")
 
 
 if __name__ == "__main__":

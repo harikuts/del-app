@@ -17,6 +17,8 @@ import numpy as np
 import argparse
 # import tensorflow
 
+import simlog
+
 """
 Global Variables:
 Define any global variables needed by your scenarios.
@@ -128,7 +130,12 @@ class torch_Model():
             output = self.nn(x)
             return output
     # Initialization function.
-    def __init__(self, load_path=None):
+    def __init__(self, load_path:str=None, log:simlog.Log=None):
+        # Set display output to either log or print.
+        if log is not None:
+            self.display = log.log
+        else:
+            self.display = print
         # Instantiate the model.
         self.model = self.SimpleModel_MNIST(28*28, 256, 10)
         if load_path is not None:
@@ -153,7 +160,7 @@ class torch_Model():
             # Print progress updates at every 10%.
             if i % (len(data)//10) == 0:
                 loss, current = loss.item(), i * len(X)
-                print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
+                self.display(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
     # Testing function.
     def test(self, data:DataLoader):
         size = len(data.dataset)
@@ -168,7 +175,7 @@ class torch_Model():
                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
         test_loss /= num_batches
         correct /= size
-        print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg. loss: {test_loss:>8f} \n")
+        self.display(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg. loss: {test_loss:>8f} \n")
         return test_loss, correct
     # Save the model weights.
     def save(self, path:str):
@@ -204,8 +211,13 @@ class torch_MNIST:
         def __getitem__(self, i):
             return self.features[i], self.targets[i]
     # Initialization.
-    def __init__(self, filename:str, split=0.8):
-        print(f"Loading file from: {filename}")
+    def __init__(self, filename:str, split:float=0.8, log:simlog.Log=None):
+        # Set display output to either log or print.
+        if log is not None:
+            self.display = log.log
+        else:
+            self.display = print
+        self.display(f"Loading file from: {filename}")
         # File contains pickled list of tuples (feature vector, label).
         with open(filename, 'rb') as f:
             data = pickle.load(f)
@@ -235,9 +247,11 @@ class torch_MNIST:
 
 # SELECTOR MODEL AND DATA - METHODS SHOULD CALL PYTORCH OR TENSORFLOW MODEL/DATA CLASSES.
 class Model(torch_Model):
-    pass
+    def __init__(self, path=None, log=None):
+        super().__init__(path, log=log)
 class Data(torch_MNIST):
-    pass
+    def __init__(self, path=None, log=None):
+        super().__init__(path, log=log)
 
 # TENSORFLOW MODEL AND DATA - WARNING: AGGREGATION METHOD NOT COMPLETE.
 
@@ -301,8 +315,8 @@ if __name__ == "__main__":
 
     # PYTORCH TEST CODE.
     print("\nTESTING DATA AND MODEL...\n")
-    data = torch_MNIST("./data/test_client.data")
-    model = torch_Model()
+    data = Data("./data/test_client.data")
+    model = Model()
     # Train the model.
     for i in range(10):
         print(f"Model 1 {i+1}\n-------------------------------")
@@ -312,7 +326,7 @@ if __name__ == "__main__":
     print("\nTESTING SAVING AND LOADING...\n")
     model.save("test_model.torch")
     # Load a new model.
-    model_reborn = torch_Model("test_model.torch")
+    model_reborn = Model("test_model.torch")
     # Train the new model (should pick up where we left off).
     for i in range(10):
         print(f"Model 2 {i+1}\n-------------------------------")
