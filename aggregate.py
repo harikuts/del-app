@@ -36,9 +36,12 @@ def aggregate(model:Model, inbox_path:str=INBOX_PATH, model_fn:str=STORED_FN, ou
     # Check each path for a model.
     for other_model in all_other_models:
         try:
+            display(f"Checking {other_model}...")
             all_weights.append(torch.load(other_model))
+            os.remove(other_model)
+            display(f"\tModel retrieved and cleared..")
         except Exception as e:
-            display(e)
+            display(f"\tModel could not be found.")
     # Aggregate through the home model.
     model.aggregate(all_weights)
     # Save the model.

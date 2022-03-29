@@ -52,6 +52,8 @@ def main():
                 pass
                 log.log(f"\t\t\tFailed to connect to {host}. Skipping.")
             s.close()
+        log.log("\tRemoving model.")
+        os.remove(MESSAGE_PATH)
 
 if __name__ == "__main__":
     main()
