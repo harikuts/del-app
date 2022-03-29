@@ -244,8 +244,8 @@ class torch_MNIST:
         self.train_dataset = self.torch_dataset((train_X, train_y))
         self.test_dataset = self.torch_dataset((test_X, test_y))
         # Create dataloaders.
-        self.train_dataloader = DataLoader(self.train_dataset, batch_size=32, shuffle=True)
-        self.test_dataloader = DataLoader(self.test_dataset, batch_size=32, shuffle=True)
+        self.train_dataloader = DataLoader(self.train_dataset, batch_size=64, shuffle=True)
+        self.test_dataloader = DataLoader(self.test_dataset, batch_size=64, shuffle=True)
 
 # SELECTOR MODEL AND DATA - METHODS SHOULD CALL PYTORCH OR TENSORFLOW MODEL/DATA CLASSES.
 class Model(torch_Model):

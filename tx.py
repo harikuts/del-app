@@ -13,6 +13,7 @@ import time
 import socket
 import random
 import os
+import asyncio
 
 from simlog import Log
 
@@ -23,19 +24,20 @@ MESSAGE_PATH = os.path.join(OUTBOX_PATH, "model.torch")
 # Get hostnames
 with open(NODELIST_FN, 'r') as f:
     nodelist = f.read().strip().split()
+nodelist.remove(socket.gethostbyname(socket.gethostname()))
 
 def main():
     log = Log("TX", os.path.join(os.getcwd(), "logs", "tx.log"))
     # Messaging loop.
     while True:
-        time.sleep(random.randint(0, 5))
-        log.log("Starting transmission...")
+        time.sleep(5)
+        log.log("Searching for updates...")
         # Get message from outbox.
-        log.log(f"\tRetrieving model...")
+        # log.log(f"\tRetrieving model...")
         try:
             with open(MESSAGE_PATH, 'rb') as f:
                 message = f.read()
-            log.log(f"\t\tRetrieved.")
+            log.log(f"\t\tFound updated model!")
         except:
             continue
         # Send to each connected host.

@@ -9,6 +9,8 @@ class Log:
         self.log_file = log_file
     
     # Log messages by writing to a file.
-    def log(self, message):
+    def log(self, message:str):
+        lines = message.split('\n')
         with open(self.log_file, 'a') as f:
-            f.write(f"({datetime.datetime.now()}) {self.header} :: {message}\n")
+            for line in lines:
+                f.write(f"({datetime.datetime.now()}) {self.header} :: {line}\n")
