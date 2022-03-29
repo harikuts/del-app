@@ -198,6 +198,8 @@ class torch_Model():
             these_weights[k] = torch.stack([state_dict[k] for state_dict in other_weights]).mean(0)
         # Set this model's weights to the mean of all weights.
         self.model.load_state_dict(these_weights)
+        # Return weights if desired.
+        return these_weights
 
 # Dataset class.
 class torch_MNIST:

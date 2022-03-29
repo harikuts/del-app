@@ -13,14 +13,16 @@ import datetime
 # Import the learning and logging packages.
 from learn import Model, Data
 from simlog import Log
+from aggregate import aggregate
 
 # Number of epochs per training cycle.
-NUM_EPOCHS = 5
+NUM_EPOCHS = 1
 
-DATA_PATH = "data/test_client.data"
+DATA_PATH = os.path.join(os.getcwd(), "data", "client.data")
 MODEL_PATH = os.path.join(os.getcwd(), "model.torch")
 OUT_MODEL_PATH = os.path.join(os.getcwd(), "outbox", "model.torch")
 log = Log("TRAIN", os.path.join(os.getcwd(), "logs", "train.log"))
+test_log = Log("TEST", os.path.join(os.getcwd(), "logs", "test.log"))
 
 def main():
     log.log("Kicking off training...")
@@ -37,7 +39,14 @@ def main():
             model.save(MODEL_PATH)
             model.save(OUT_MODEL_PATH)
         log.log("\tTraining done.")
-        time.sleep(5)
+        # Test the model.
+        model = Model(MODEL_PATH, log=test_log)
+        test_log.log("Before aggregation:")
+        model.test(Data(DATA_PATH, log=test_log).test_dataloader)
+        # Aggregate the model.
+        model = aggregate(model)
+        test_log.log("After aggregation:")
+        model.test(Data(DATA_PATH, log=test_log).test_dataloader)
 
 if __name__ == "__main__":
     main()
