@@ -32,13 +32,16 @@ test_log = Log("TEST", os.path.join(os.getcwd(), "logs", "test.log"))
 
 def main():
     log.log("Kicking off training...")
+    round_counter = 0
     while True:
+        round_counter += 1
         # Load the model.
         log.log("\tLoading model...")
         model = Model(MODEL_PATH, log=log)
         # Train the model.
         log.log(f"\tTraining model for {NUM_EPOCHS} epochs...")
         for i in range(1, NUM_EPOCHS+1):
+            log.log(f"ROUND {round_counter}: EPOCH {i}")
             model.train(Data(DATA_PATH, log=log).train_dataloader)
             model.test(Data(DATA_PATH, log=log).test_dataloader)
             # Publish message to both the outbox and the current model.

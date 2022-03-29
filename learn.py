@@ -147,6 +147,7 @@ class torch_Model():
     # Training function.
     def train(self, data:DataLoader):
         size = len(data.dataset)
+        self.model.train()
         for i, (X, y) in enumerate(data):
             # X, y = X.to_device(), y.to_device()
             # Get prediction.
