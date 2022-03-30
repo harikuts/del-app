@@ -47,12 +47,13 @@ def aggregate(log:Log=None):
     processed_model_paths = []
     for other_model in ALL_OTHER_MODELS:
         try:
-            display(f"Checking {other_model}...")
+            # display(f"Checking {other_model}...")
             all_weights.append(torch.load(other_model))
             processed_model_paths.append(other_model)
-            display(f"\tModel retrieved.")
+            display(f"\tModel retrieved at {other_model}.")
         except FileNotFoundError as e:
-            display(f"\tModel could not be found.")
+            pass
+            # display(f"\tModel could not be found.")
     # If the quota of models is met, proceed, else skip aggregation this time.
     if len(processed_model_paths) < QUOTA:
         return False

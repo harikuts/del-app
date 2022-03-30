@@ -17,7 +17,7 @@ from simlog import Log
 from aggregate import aggregate
 
 # Number of epochs per training cycle.
-NUM_EPOCHS = 5
+NUM_EPOCHS = 10
 
 # Paths.
 DATA_PATH = os.path.join(os.getcwd(), "data", "client.data")
