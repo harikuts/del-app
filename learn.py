@@ -245,8 +245,8 @@ class torch_MNIST:
         self.train_dataset = self.torch_dataset((train_X, train_y))
         self.test_dataset = self.torch_dataset((test_X, test_y))
         # Create dataloaders.
-        self.train_dataloader = DataLoader(self.train_dataset, batch_size=64, shuffle=True)
-        self.test_dataloader = DataLoader(self.test_dataset, batch_size=64, shuffle=True)
+        self.train_dataloader = DataLoader(self.train_dataset, batch_size=32, shuffle=True)
+        self.test_dataloader = DataLoader(self.test_dataset, batch_size=32, shuffle=True)
 
 # SELECTOR MODEL AND DATA - METHODS SHOULD CALL PYTORCH OR TENSORFLOW MODEL/DATA CLASSES.
 class Model(torch_Model):
@@ -317,34 +317,78 @@ if __name__ == "__main__":
     # os.remove("model.h5")
 
     # PYTORCH TEST CODE.
-    print("\nTESTING DATA AND MODEL...\n")
-    data = Data("./data/test_client.data")
-    model = Model()
+    # Load data, train model, and save for Node 1.
+    print("\nTESTING DATA AND MODEL FOR NODE 1...\n")
+    data1 = Data("./data_repo/node1/client.data")
+    model1 = Model()
     # Train the model.
     for i in range(10):
-        print(f"Model 1 {i+1}\n-------------------------------")
-        model.train(data.train_dataloader)
-        model.test(data.test_dataloader)
+        print(f"Node 1 {i+1}\n--------------------------------")
+        model1.train(data1.train_dataloader)
+        model1.test(data1.test_dataloader)
     # Save the model.
-    print("\nTESTING SAVING AND LOADING...\n")
-    model.save("test_model.torch")
-    # Load a new model.
-    model_reborn = Model("test_model.torch")
-    # Train the new model (should pick up where we left off).
+    print("\nSAVING NODE 1 MODEL...\n")
+    model1.save("test_model_1.torch")
+    # Load data, train model, and save for Node 1, same process.
+    print("\nTESTING DATA AND MODEL FOR NODE 2...\n")
+    data2 = Data("./data_repo/node2/client.data")
+    model2 = Model()
+    # Train the model.
     for i in range(10):
-        print(f"Model 2 {i+1}\n-------------------------------")
-        model_reborn.train(data.train_dataloader)
-        model_reborn.test(data.test_dataloader)
-    # Test the first and second models.
-    print("\nTESTING AGGREGATION...\n")
-    print("Model 1")
-    print(model.model.state_dict())
-    model.test(data.test_dataloader)
-    print("Model 2")
-    print(model_reborn.model.state_dict())
-    model_reborn.test(data.test_dataloader)
-    # Update the first model with aggregation with second model's weights.
-    model.aggregate([model_reborn.model.state_dict(),])
-    print(model.model.state_dict())
-    # Test the model.
-    model.test(data.test_dataloader)
+        print(f"Node 2 {i+1}\n--------------------------------")
+        model2.train(data2.train_dataloader)
+        model2.test(data2.test_dataloader)
+    # Save the model.
+    print("\nSAVING NODE 2 MODEL...\n")
+    model2.save("test_model_2.torch")
+
+    # Load Node 1 model weights into new model.
+    print(f"\nLOADING NODE 1 MODEL AND TRAINING...\n")
+    model1_reloaded = Model("test_model_1.torch")
+    # Train the new model (should pick up where we left off), don't save.
+    for i in range(10):
+        print(f"Node 1 Reloaded {i+1}\n--------------------------------")
+        model1_reloaded.train(data1.train_dataloader)
+        model1_reloaded.test(data1.test_dataloader)
+
+    # Now, try aggregating the originals (model1 and model2), after testing them first.
+    print(f"\nOriginal Node 1 Model Test\n")
+    model1.test(data1.test_dataloader)
+    print(f"\nOriginal Node 2 Model Test")
+    model2.test(data2.test_dataloader)
+    breakpoint()
+    # Aggregate the model using both model objects, and test both.
+    print("\nAggregating Node 2 model into Node 1 model...\n")
+    model1.aggregate([model2.model.state_dict(),])
+    print("\nAggregating Node 1 model into Node 2 model...\n")
+    model2.aggregate([model1.model.state_dict(),])
+    # Test models again to see post-aggregation accuracy.
+    print(f"\nOriginal Node 1 Model Test - Post-Aggregation\n")
+    model1.test(data1.test_dataloader)
+    print(f"\nOriginal Node 2 Model Test - Post-Aggregation")
+    model2.test(data2.test_dataloader)
+
+    # Now, we try training models post-aggregation.
+    print(f"\nTesting Node 1 Model Training After Aggregation...\n")
+    for i in range(10):
+        print(f"Node 1 {i+1}\n--------------------------------")
+        model1.train(data1.train_dataloader)
+        model1.test(data1.test_dataloader)
+
+    
+
+    # # Test the first and second models.
+    # print("\nTESTING LOADING AND CONTINUING TRAINING...\n")
+    # print("Model 1")
+    # print(model1.model.state_dict())
+    # model1.test(data1.test_dataloader)
+    # model
+    
+    # print("Model 2")
+    # print(model_reborn.model.state_dict())
+    # model_reborn.test(data.test_dataloader)
+    # # Update the first model with aggregation with second model's weights.
+    # model.aggregate([model_reborn.model.state_dict(),])
+    # print(model.model.state_dict())
+    # # Test the model.
+    # model.test(data.test_dataloader)
