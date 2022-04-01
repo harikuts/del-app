@@ -334,7 +334,7 @@ if __name__ == "__main__":
     data2 = Data("./data_repo/node2/client.data")
     model2 = Model()
     # Train the model.
-    for i in range(10):
+    for i in range(20):
         print(f"Node 2 {i+1}\n--------------------------------")
         model2.train(data2.train_dataloader)
         model2.test(data2.test_dataloader)
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     model1.test(data1.test_dataloader)
     print(f"\nOriginal Node 2 Model Test")
     model2.test(data2.test_dataloader)
-    breakpoint()
+    # breakpoint()
     # Aggregate the model using both model objects, and test both.
     print("\nAggregating Node 2 model into Node 1 model...\n")
     model1.aggregate([model2.model.state_dict(),])
@@ -370,10 +370,10 @@ if __name__ == "__main__":
 
     # Now, we try training models post-aggregation.
     print(f"\nTesting Node 1 Model Training After Aggregation...\n")
-    for i in range(10):
-        print(f"Node 1 {i+1}\n--------------------------------")
-        model1.train(data1.train_dataloader)
-        model1.test(data1.test_dataloader)
+    for i in range(20):
+        print(f"Node 2 {i+1}\n--------------------------------")
+        model2.train(data1.train_dataloader)
+        model2.test(data1.test_dataloader)
 
     
 
