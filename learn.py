@@ -351,6 +351,10 @@ if __name__ == "__main__":
         model1_reloaded.train(data1.train_dataloader)
         model1_reloaded.test(data1.test_dataloader)
 
+    # Reload original models.
+    print(f"\nRELOADING MODELS FOR AGGREGATION...\n")
+    model1 = Model(path="test_model_1.torch")
+    model2 = Model(path="test_model_2.torch")
     # Now, try aggregating the originals (model1 and model2), after testing them first.
     print(f"\nOriginal Node 1 Model Test\n")
     model1.test(data1.test_dataloader)

@@ -28,7 +28,7 @@ AGG_MODEL_PATH = os.path.join(os.getcwd(), AGG_MODEL_FN)
 
 # Logs.
 log = Log("TRAIN", os.path.join(os.getcwd(), "logs", "train.log"))
-test_log = Log("TEST", os.path.join(os.getcwd(), "logs", "test.log"))
+# test_log = Log("TEST", os.path.join(os.getcwd(), "logs", "test.log"))
 
 def main():
     log.log("Kicking off training...")
@@ -55,12 +55,13 @@ def main():
             try:
                 # Try to find aggregated model and generate model from it.
                 # log.log("Searching for aggregated model...")
-                model = Model(AGG_MODEL_PATH, log=log)
+                model.load(AGG_MODEL_PATH)
                 # If successful save the aggregated model
                 log.log(f"\tAggregated model found!\n\t{AGG_MODEL_PATH} --> {MODEL_PATH}")
                 model.save(MODEL_PATH)
                 # Test the aggregated model.
                 log.log(f"Post-aggregation testing results are below.")
+                model.load(MODEL_PATH)
                 model.test(Data(DATA_PATH, log=log).test_dataloader)
                 break
             except FileNotFoundError:
