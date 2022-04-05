@@ -12,15 +12,7 @@ import os
 
 from simlog import Log
 
-# File I/O information.
-NODELIST_FN = "nodelist.txt"
-STORED_FN = "model.torch"
-CUR_DIR = os.getcwd()
-INBOX_PATH = os.path.join(CUR_DIR, "inbox")
-
-# Arbitrary network values.
-PORT = 1245
-DATASIZE = 1024
+from config import PORT, DATASIZE, NODELIST_FN, MODEL_FN, INBOX_PATH
 
 rx_lock = threading.Lock()
 
@@ -41,7 +33,7 @@ def rx_thread(conn, address, log):
     if data_exists:
         log.log(f"({address[0]}) {(full_data[:5])}...")
         # Store in the inbox.
-        store_path = os.path.join(INBOX_PATH, address[0], STORED_FN)
+        store_path = os.path.join(INBOX_PATH, address[0], MODEL_FN)
         with open(store_path, 'wb') as f:
             f.write(full_data)
         log.log(f"--> {store_path}")

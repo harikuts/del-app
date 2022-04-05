@@ -7,7 +7,7 @@ import os
 from learn import Model
 from simlog import Log
 
-NODELIST_FN = "nodelist.txt"
+from config import NODELIST_FN
 
 def main():
     log = Log("INIT", os.path.join(os.getcwd(), "logs", "init.log"))

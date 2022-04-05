@@ -7,22 +7,16 @@ import asyncio
 from simlog import Log
 from learn import Model, Data
 
+from config import NODELIST_FN, MODEL_FN, MODEL_PATH, \
+    AGG_MODEL_PATH, INBOX_PATH, DATA_PATH, AGGREGATION_QUOTA
+
 # Get nodes.
-NODELIST_FN = "nodelist.txt"
 with open(NODELIST_FN, 'r') as f:
      NODE_LIST = f.read().strip().split()
 NODE_LIST.remove(socket.gethostbyname(socket.gethostname()))
 # Path information
-MODEL_FN = "model.torch"
-AGG_MODEL_FN = "model.agg.torch"
-CUR_DIR = os.getcwd()
-MODEL_PATH = os.path.join(CUR_DIR, MODEL_FN)
-AGG_MODEL_PATH = os.path.join(CUR_DIR, AGG_MODEL_FN)
-INBOX_PATH = os.path.join(CUR_DIR, "inbox")
 ALL_OTHER_MODELS = [os.path.join(INBOX_PATH, address, MODEL_FN) \
     for address in NODE_LIST]
-DATA_PATH = os.path.join(os.getcwd(), "data", "client.data")
-QUOTA = 2
 
 def aggregate(log:Log=None):
     """
@@ -55,7 +49,7 @@ def aggregate(log:Log=None):
             pass
             # display(f"\tModel could not be found.")
     # If the quota of models is met, proceed, else skip aggregation this time.
-    if len(processed_model_paths) < QUOTA:
+    if len(processed_model_paths) < AGGREGATION_QUOTA:
         return False
     # AGGREGATION.
     # Clean up (remove) the processed models.

@@ -16,15 +16,8 @@ from learn import Model, Data
 from simlog import Log
 from aggregate import aggregate
 
-# Number of epochs per training cycle.
-NUM_EPOCHS = 10
-
-# Paths.
-DATA_PATH = os.path.join(os.getcwd(), "data", "client.data")
-MODEL_PATH = os.path.join(os.getcwd(), "model.torch")
-PUBLISHED_MODEL_PATH = os.path.join(os.getcwd(), "outbox", "model.torch")
-AGG_MODEL_FN = "model.agg.torch"
-AGG_MODEL_PATH = os.path.join(os.getcwd(), AGG_MODEL_FN)
+from config import NUM_EPOCHS, DATA_PATH, MODEL_PATH, PUBLISHED_MODEL_PATH, \
+    AGG_MODEL_PATH
 
 # Logs.
 log = Log("TRAIN", os.path.join(os.getcwd(), "logs", "train.log"))

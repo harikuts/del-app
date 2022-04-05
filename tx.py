@@ -17,9 +17,7 @@ import asyncio
 
 from simlog import Log
 
-CUR_DIR = os.getcwd()
-OUTBOX_PATH = os.path.join(CUR_DIR, "outbox")
-MESSAGE_PATH = os.path.join(OUTBOX_PATH, "model.torch")
+from config import PUBLISHED_MODEL_PATH
 
 # Get hostnames
 with open(NODELIST_FN, 'r') as f:
@@ -35,7 +33,7 @@ def main():
         # Get message from outbox.
         # log.log(f"\tRetrieving model...")
         try:
-            with open(MESSAGE_PATH, 'rb') as f:
+            with open(PUBLISHED_MODEL_PATH, 'rb') as f:
                 message = f.read()
             log.log(f"\t\tFound updated model!")
         except:
@@ -55,7 +53,7 @@ def main():
                 log.log(f"\t\t\tFailed to connect to {host}. Skipping.")
             s.close()
         log.log("\tRemoving model.")
-        os.remove(MESSAGE_PATH)
+        os.remove(PUBLISHED_MODEL_PATH)
 
 if __name__ == "__main__":
     main()
