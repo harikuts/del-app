@@ -6,6 +6,7 @@ import sys
 import pickle
 from typing import OrderedDict
 import numpy as np
+import pandas as pd
 import os
 
 import torch
@@ -13,7 +14,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-import numpy as np
+from torchvision import datasets, transforms
+from torch.utils.data.sampler import  SubsetRandomSampler 
 import argparse
 # import tensorflow
 
@@ -129,6 +131,40 @@ class torch_Model():
             x = torch.reshape(x, (-1, self.input_size))
             output = self.nn(x)
             return output
+
+    class FashionCNN(nn.Module):
+        def __init__(self):
+            super(torch_Model.FashionCNN, self).__init__()
+            self.layer1 = nn.Sequential(
+                nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.MaxPool2d(kernel_size=2, stride=2)
+            )
+            
+            self.layer2 = nn.Sequential(
+                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
+                nn.BatchNorm2d(64),
+                nn.ReLU(),
+                nn.MaxPool2d(2)
+            )
+            
+            self.fc1 = nn.Linear(in_features=64*6*6, out_features=600)
+            self.drop = nn.Dropout2d(0.25)
+            self.fc2 = nn.Linear(in_features=600, out_features=120)
+            self.fc3 = nn.Linear(in_features=120, out_features=10)
+            
+        def forward(self, x):
+            out = self.layer1(x)
+            out = self.layer2(out)
+            out = out.view(out.size(0), -1)
+            out = self.fc1(out)
+            out = self.drop(out)
+            out = self.fc2(out)
+            out = self.fc3(out)
+            
+            return out
+
     # Initialization function.
     def __init__(self, load_path:str=None, log:simlog.Log=None):
         # Set display output to either log or print.
@@ -137,13 +173,16 @@ class torch_Model():
         else:
             self.display = print
         # Instantiate the model.
-        self.model = self.SimpleModel_MNIST(28*28, 256, 10)
+        
+        #self.model = self.SimpleModel_MNIST(28*28, 256, 10)
+        self.model = self.FashionCNN()
         if load_path is not None:
             # If load file is provided, load model from there.
             self.load(load_path)
         # Loss function and optimizer variables.
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3)
+    
     # Training function.
     def train(self, data:DataLoader):
         size = len(data.dataset)
@@ -191,6 +230,7 @@ class torch_Model():
     def aggregate(self, other_weights:OrderedDict[str, torch.Tensor]):
         # Got some help from: https://towardsdatascience.com/preserving-data-privacy-in-deep-learning-part-1-a04894f78029.
         # Add this model's weights to list of weights.
+
         other_weights.append(self.model.state_dict())
         # Calculate mean per each key of the state dictionary.
         these_weights = self.model.state_dict()
@@ -200,9 +240,52 @@ class torch_Model():
         # Set this model's weights to the mean of all weights.
         self.model.load_state_dict(these_weights)
         # Return weights if desired.
+
         return these_weights
 
 # Dataset class.
+class torch_FashionMNIST:
+    #Custom Dataset class:
+    class torch_fashion():
+        def __init__(self, data, transform = None):
+            self.fashion_MNIST = list(data.values)
+            self.transform = transform
+            
+            label = []
+            image = []
+            
+            for i in self.fashion_MNIST:
+                # first column is of labels.
+                label.append(i[0])
+                image.append(i[1:])
+            self.labels = np.asarray(label)
+            # Dimension of Images = 28 * 28 * 1. where height = width = 28 and color_channels = 1.
+            self.images = np.asarray(image).reshape(-1, 28, 28, 1).astype('float32')
+
+        def __getitem__(self, index):
+            label = self.labels[index]
+            image = self.images[index]
+            
+            if self.transform is not None:
+                image = self.transform(image)
+
+            return image, label
+
+        def __len__(self):
+            return len(self.images)
+
+
+    def __init__(self, filename:str, split:float=0.8): 
+        train_csv = pd.read_csv(filename)
+        test_csv = pd.read_csv("./data_repo/fashion-mnist_test.csv")
+
+        self.train_dataset = self.torch_fashion(train_csv, transform=transforms.Compose([transforms.ToTensor()]))
+        self.test_dataset = self.torch_fashion(test_csv, transform=transforms.Compose([transforms.ToTensor()]))
+
+        self.train_dataloader = DataLoader(self.train_dataset, batch_size=100)
+        self.test_dataloader = DataLoader(self.test_dataset, batch_size=100)
+
+
 class torch_MNIST:
     # Custom dataset class to use with PyTorch.
     class torch_dataset(Dataset):
@@ -252,77 +335,20 @@ class torch_MNIST:
 class Model(torch_Model):
     def __init__(self, path=None, log=None):
         super().__init__(path, log=log)
-class Data(torch_MNIST):
+class Data(torch_FashionMNIST):
     def __init__(self, path=None, log=None):
-        super().__init__(path, log=log)
-
-# TENSORFLOW MODEL AND DATA - WARNING: AGGREGATION METHOD NOT COMPLETE.
-
-# class tf_Model():
-#     # Initialization function.
-#     def __init__(self, model_generator, load_file=None):
-#         # Define the model here. It's only called when a prior model does not exist.
-#         if load_file is None:
-#             # Call the pass thru model generator function.
-#             self.model = model_generator()
-#         # If a load file has been given, load model from the file.
-#         else:
-#             self.load(load_file)
-#         # Define the data here.
-#         pass
-#     # Carries out training.
-#     def train(self, data):
-#         history = self.model.fit(data[0], data[1], epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, shuffle=False)
-#     # Method to save model.
-#     def save(self, filename):
-#         self.model.save(filename)
-#     # Method to load model.
-#     def load(self, filename):
-#         self.model = tf.keras.models.load_model(filename)
-
-# class tf_Data():
-#     # Initialization function takes and parses data into training and test.
-#     def __init__(self):
-#         # Store data from generator function. <--- This is where to change your data.
-#         self.data = TweetData(DATA_FILE, ENCODER)
-#         # Split the data.
-#         self.split()
-#     # Function to split data.
-#     def split(self):
-#         # Cut up the indices.
-#         total = len(self.data[1])
-#         fractions = (sum(TRAIN_TEST_VAL_SPLIT[:1]), sum(TRAIN_TEST_VAL_SPLIT[:2]), sum(TRAIN_TEST_VAL_SPLIT))
-#         if fractions[-1] > 1:
-#             raise IndexError("Check TRAIN_TEST_VAL_SPLIT and ensure proper ratios.")
-#         splits = (np.array(fractions) * total)
-#         splits = [int(x) for x in splits]
-#         print("Splits:", splits)
-#         # Store the dataset splits.
-#         self.training_data = (self.data[0][:splits[0]], self.data[1][:splits[0]])
-#         self.validation_data = (self.data[0][splits[0]:splits[1]], self.data[0][splits[0]:splits[1]])
-#         self.testing_data = (self.data[0][splits[1]:splits[2]], self.data[0][splits[1]:splits[2]])
-#     pass
+        #super().__init__(path, log=log)
+        super().__init__(path)
 
 # Main function to test.
 if __name__ == "__main__":
-
-    # TENSORFLOW TEST CODE.
-    # data = tf_Data()
-    # model1 = tf_Model(tf_LSTM)
-    # model1.train(data.training_data)
-    # model1.save("model.h5")
-    # model2 = tf_Model()
-    # model2.load("model.h5")
-    # model2.train(data.training_data)
-    # os.remove("model.h5")
-
     # PYTORCH TEST CODE.
     # Load data, train model, and save for Node 1.
     print("\nTESTING DATA AND MODEL FOR NODE 1...\n")
-    data1 = Data("./data_repo/node1/client.data")
+    data1 = Data("./data_repo/fashion-mnist_train.csv")
     model1 = Model()
     # Train the model.
-    for i in range(10):
+    for i in range(4):
         print(f"Node 1 {i+1}\n--------------------------------")
         model1.train(data1.train_dataloader)
         model1.test(data1.test_dataloader)
@@ -331,10 +357,10 @@ if __name__ == "__main__":
     model1.save("test_model_1.torch")
     # Load data, train model, and save for Node 1, same process.
     print("\nTESTING DATA AND MODEL FOR NODE 2...\n")
-    data2 = Data("./data_repo/node2/client.data")
+    data2 = Data("./data_repo/fashion-mnist_train.csv")
     model2 = Model()
     # Train the model.
-    for i in range(20):
+    for i in range(4):
         print(f"Node 2 {i+1}\n--------------------------------")
         model2.train(data2.train_dataloader)
         model2.test(data2.test_dataloader)
@@ -346,7 +372,7 @@ if __name__ == "__main__":
     print(f"\nLOADING NODE 1 MODEL AND TRAINING...\n")
     model1_reloaded = Model("test_model_1.torch")
     # Train the new model (should pick up where we left off), don't save.
-    for i in range(10):
+    for i in range(4):
         print(f"Node 1 Reloaded {i+1}\n--------------------------------")
         model1_reloaded.train(data1.train_dataloader)
         model1_reloaded.test(data1.test_dataloader)
@@ -364,6 +390,7 @@ if __name__ == "__main__":
     # Aggregate the model using both model objects, and test both.
     print("\nAggregating Node 2 model into Node 1 model...\n")
     model1.aggregate([model2.model.state_dict(),])
+
     print("\nAggregating Node 1 model into Node 2 model...\n")
     model2.aggregate([model1.model.state_dict(),])
     # Test models again to see post-aggregation accuracy.
@@ -371,7 +398,7 @@ if __name__ == "__main__":
     model1.test(data1.test_dataloader)
     print(f"\nOriginal Node 2 Model Test - Post-Aggregation")
     model2.test(data2.test_dataloader)
-
+ 
     # Now, we try training models post-aggregation.
     print(f"\nTesting Node 1 Model Training After Aggregation...\n")
     for i in range(20):
