@@ -25,6 +25,8 @@ import simlog
 Global Variables:
 Define any global variables needed by your scenarios.
 """
+#Variable for CommandLine Interface: 
+RUN_MNIST = True
 
 # All scenarios.
 TRAIN_TEST_VAL_SPLIT = (0.6, 0.2, 0.2)
@@ -172,10 +174,13 @@ class torch_Model():
             self.display = log.log
         else:
             self.display = print
+
         # Instantiate the model.
-        
-        #self.model = self.SimpleModel_MNIST(28*28, 256, 10)
-        self.model = self.FashionCNN()
+        if RUN_MNIST:
+            self.model = self.SimpleModel_MNIST(28*28, 256, 10)
+        else:
+            self.model = self.FashionCNN()
+
         if load_path is not None:
             # If load file is provided, load model from there.
             self.load(load_path)
@@ -335,20 +340,53 @@ class torch_MNIST:
 class Model(torch_Model):
     def __init__(self, path=None, log=None):
         super().__init__(path, log=log)
-class Data(torch_FashionMNIST):
+class DataFashion(torch_FashionMNIST):
     def __init__(self, path=None, log=None):
-        #super().__init__(path, log=log)
-        super().__init__(path)
+            super().__init__(path)
+class DataMNIST(torch_MNIST): 
+    def __init(self, path=None, log=None):
+        super().__init__(path, log=log)
+
 
 # Main function to test.
 if __name__ == "__main__":
+
+    #Command Line interface code: 
+    parser = argparse.ArgumentParser(description="Simulate Machine Learning in a Federated Learning setting")
+    parser.add_argument('-m', '--MNIST', action='store_true', help = "Run the MNIST numbers dataset.")
+    parser.add_argument('-f', '--fashionMNIST', action='store_true', help = "Run based on the FashionMNIST dataset.")
+    args = parser.parse_args()
+
+    if args.MNIST is True and args.fashionMNIST is True:
+        print("Cannot run both MNIST and FashionMNIST")
+        sys.exit()
+    elif args.fashionMNIST is True: 
+        RUN_MNIST = False
+    elif args.MNIST is True: 
+        RUN_MNIST = True
+    else:
+        print("Argument must be provided")
+        sys.exit()
+
+    if(RUN_MNIST):
+        data1_path = "./data_repo/node1/client.data"
+        data2_path = "./data_repo/node2/client.data"
+        data1 = DataMNIST(data1_path)
+        data2 = DataMNIST(data2_path)
+    else:
+        data1_path = "./data_repo/fashion-mnist_train.csv"
+        data2_path = "./data_repo/fashion-mnist_train.csv"
+        data1 = DataFashion(data1_path)
+        data2 = DataFashion(data2_path)
+
+
     # PYTORCH TEST CODE.
     # Load data, train model, and save for Node 1.
+
     print("\nTESTING DATA AND MODEL FOR NODE 1...\n")
-    data1 = Data("./data_repo/fashion-mnist_train.csv")
     model1 = Model()
     # Train the model.
-    for i in range(4):
+    for i in range(10):
         print(f"Node 1 {i+1}\n--------------------------------")
         model1.train(data1.train_dataloader)
         model1.test(data1.test_dataloader)
@@ -357,10 +395,9 @@ if __name__ == "__main__":
     model1.save("test_model_1.torch")
     # Load data, train model, and save for Node 1, same process.
     print("\nTESTING DATA AND MODEL FOR NODE 2...\n")
-    data2 = Data("./data_repo/fashion-mnist_train.csv")
     model2 = Model()
     # Train the model.
-    for i in range(4):
+    for i in range(20):
         print(f"Node 2 {i+1}\n--------------------------------")
         model2.train(data2.train_dataloader)
         model2.test(data2.test_dataloader)
@@ -372,7 +409,7 @@ if __name__ == "__main__":
     print(f"\nLOADING NODE 1 MODEL AND TRAINING...\n")
     model1_reloaded = Model("test_model_1.torch")
     # Train the new model (should pick up where we left off), don't save.
-    for i in range(4):
+    for i in range(10):
         print(f"Node 1 Reloaded {i+1}\n--------------------------------")
         model1_reloaded.train(data1.train_dataloader)
         model1_reloaded.test(data1.test_dataloader)
