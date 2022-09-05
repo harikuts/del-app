@@ -374,8 +374,8 @@ if __name__ == "__main__":
         data1 = DataMNIST(data1_path)
         data2 = DataMNIST(data2_path)
     else:
-        data1_path = "./data_repo/fashion-mnist_train.csv"
-        data2_path = "./data_repo/fashion-mnist_train.csv"
+        data1_path = "./data_repo/node1/fashion-mnist_train.csv"
+        data2_path = "./data_repo/node2/fashion-mnist_train.csv"
         data1 = DataFashion(data1_path)
         data2 = DataFashion(data2_path)
 
