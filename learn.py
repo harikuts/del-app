@@ -25,7 +25,7 @@ import simlog
 Global Variables:
 Define any global variables needed by your scenarios.
 """
-#Variable for CommandLine Interface: 
+# Variable for CommandLine Interface: 
 RUN_MNIST = True
 
 # All scenarios.
@@ -137,36 +137,19 @@ class torch_Model():
     class FashionCNN(nn.Module):
         def __init__(self):
             super(torch_Model.FashionCNN, self).__init__()
-            self.layer1 = nn.Sequential(
-                nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
-                nn.BatchNorm2d(32),
+            self.flatten = nn.Flatten()
+            self.linear_relu_stack = nn.Sequential(
+                nn.Linear(28*28, 512),
                 nn.ReLU(),
-                nn.MaxPool2d(kernel_size=2, stride=2)
-            )
-            
-            self.layer2 = nn.Sequential(
-                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
-                nn.BatchNorm2d(64),
+                nn.Linear(512, 512),
                 nn.ReLU(),
-                nn.MaxPool2d(2)
+                nn.Linear(512, 10),
             )
-            
-            self.fc1 = nn.Linear(in_features=64*6*6, out_features=600)
-            self.drop = nn.Dropout2d(0.25)
-            self.fc2 = nn.Linear(in_features=600, out_features=120)
-            self.fc3 = nn.Linear(in_features=120, out_features=10)
-            
-        def forward(self, x):
-            out = self.layer1(x)
-            out = self.layer2(out)
-            out = out.view(out.size(0), -1)
-            out = self.fc1(out)
-            out = self.drop(out)
-            out = self.fc2(out)
-            out = self.fc3(out)
-            
-            return out
 
+        def forward(self, x):
+            x = self.flatten(x)
+            logits = self.linear_relu_stack(x)
+            return logits
     # Initialization function.
     def __init__(self, load_path:str=None, log:simlog.Log=None):
         # Set display output to either log or print.
@@ -234,8 +217,25 @@ class torch_Model():
     # Aggregate other model weights with this one.
     def aggregate(self, other_weights:OrderedDict[str, torch.Tensor]):
         # Got some help from: https://towardsdatascience.com/preserving-data-privacy-in-deep-learning-part-1-a04894f78029.
-        # Add this model's weights to list of weights.
 
+        # Checking to see that the models have the same number of layers 
+        if(len(other_weights[0]) != len(self.model.state_dict())):
+            print("Models have different number of layers")
+            sys.exit()
+
+        #Checking to see that the model layers have the same number of weights
+        num_weights_in_tensor = []
+        for key in other_weights[0]:
+            num_weights_in_tensor.append(len(other_weights[0][key]))
+        
+        i = 0
+        for key in self.model.state_dict():
+            if(num_weights_in_tensor[i] != len(self.model.state_dict()[key])):
+                print("Model layer has different number of weights")
+                sys.exit()
+            i = i + 1
+
+        # Add this model's weights to list of weights.
         other_weights.append(self.model.state_dict())
         # Calculate mean per each key of the state dictionary.
         these_weights = self.model.state_dict()
@@ -386,7 +386,7 @@ if __name__ == "__main__":
     print("\nTESTING DATA AND MODEL FOR NODE 1...\n")
     model1 = Model()
     # Train the model.
-    for i in range(10):
+    for i in range(1):
         print(f"Node 1 {i+1}\n--------------------------------")
         model1.train(data1.train_dataloader)
         model1.test(data1.test_dataloader)
@@ -397,7 +397,7 @@ if __name__ == "__main__":
     print("\nTESTING DATA AND MODEL FOR NODE 2...\n")
     model2 = Model()
     # Train the model.
-    for i in range(20):
+    for i in range(1):
         print(f"Node 2 {i+1}\n--------------------------------")
         model2.train(data2.train_dataloader)
         model2.test(data2.test_dataloader)
@@ -409,7 +409,7 @@ if __name__ == "__main__":
     print(f"\nLOADING NODE 1 MODEL AND TRAINING...\n")
     model1_reloaded = Model("test_model_1.torch")
     # Train the new model (should pick up where we left off), don't save.
-    for i in range(10):
+    for i in range(1):
         print(f"Node 1 Reloaded {i+1}\n--------------------------------")
         model1_reloaded.train(data1.train_dataloader)
         model1_reloaded.test(data1.test_dataloader)
@@ -438,7 +438,7 @@ if __name__ == "__main__":
  
     # Now, we try training models post-aggregation.
     print(f"\nTesting Node 1 Model Training After Aggregation...\n")
-    for i in range(20):
+    for i in range(1):
         print(f"Node 2 {i+1}\n--------------------------------")
         model2.train(data1.train_dataloader)
         model2.test(data1.test_dataloader)
