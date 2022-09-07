@@ -2,6 +2,7 @@
 Learning Library:
 Classes and methods that pertain to the learning process.
 """
+from hmac import compare_digest
 import sys
 import pickle
 from typing import OrderedDict
@@ -214,26 +215,35 @@ class torch_Model():
         weights = torch.load(path)
         # Set model weights.
         self.model.load_state_dict(weights)
+
+    # Check to see that state dictionaries have the same shape
+    def compare_state_dict(self, other_weights):
+        # Checking to see that the models have the same number of layers 
+        if(len(other_weights) != len(self.model.state_dict())):
+            print("Models have different number of layers")
+            return False
+
+        #Checking to see that the model layers have the same number of weights
+        num_weights_in_tensor = []
+        for key in other_weights:
+            num_weights_in_tensor.append(other_weights[key].shape)
+        
+        i = 0
+        for key in self.model.state_dict():
+            if(num_weights_in_tensor[i] != self.model.state_dict()[key].shape):
+                print("Model layer has different number of weights")
+                return False
+            i = i + 1
+
+        return True
+
+
     # Aggregate other model weights with this one.
     def aggregate(self, other_weights:OrderedDict[str, torch.Tensor]):
         # Got some help from: https://towardsdatascience.com/preserving-data-privacy-in-deep-learning-part-1-a04894f78029.
 
-        # Checking to see that the models have the same number of layers 
-        if(len(other_weights[0]) != len(self.model.state_dict())):
-            print("Models have different number of layers")
+        if(self.compare_state_dict(other_weights[0]) == False):
             sys.exit()
-
-        #Checking to see that the model layers have the same number of weights
-        num_weights_in_tensor = []
-        for key in other_weights[0]:
-            num_weights_in_tensor.append(len(other_weights[0][key]))
-        
-        i = 0
-        for key in self.model.state_dict():
-            if(num_weights_in_tensor[i] != len(self.model.state_dict()[key])):
-                print("Model layer has different number of weights")
-                sys.exit()
-            i = i + 1
 
         # Add this model's weights to list of weights.
         other_weights.append(self.model.state_dict())
