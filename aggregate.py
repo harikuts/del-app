@@ -5,7 +5,7 @@ import socket
 import asyncio
 
 from simlog import Log
-from learn import Model, Data
+from learn import Model, DataFashion, DataMNIST
 
 from config import NODELIST_FN, MODEL_FN, MODEL_PATH, \
     AGG_MODEL_PATH, INBOX_PATH, DATA_PATH, AGGREGATION_QUOTA
@@ -58,18 +58,24 @@ def aggregate(log:Log=None):
         # Test the model. (Should be removed later)
         other_model = Model(processed_model, log=log)
         # log.log(next(iter(other_model.model.state_dict()))[1])
-        other_model.test(Data(DATA_PATH, log=log).test_dataloader)
+        other_model.test(DataFashion(DATA_PATH, log=log).test_dataloader)
+        log.log("\n OTHER MODEL WEIGHTS: \n")
+        log.log(f"{other_model.getModelWeights()}")
         # Remove model.
         log.log(f"Model at {processed_model} cleared.")
         os.remove(processed_model)
     # Test home model. (Should be removed later)
     log.log("\nHome model information:\n")
     # log.log(next(iter(model.model.state_dict()))[0])
-    model.test(Data(DATA_PATH, log=log).test_dataloader)
+    model.test(DataFashion(DATA_PATH, log=log).test_dataloader)
+    log.log("\n HOME MODEL WEIGHTS: \n")
+    log.log(f"{model.getModelWeights()}")
     # Aggregate through the home model.
     model.aggregate(all_weights)
     # Save the model.
     model.save(AGG_MODEL_PATH)
+    log.log("\n AGGREGATED MODEL WEIGHTS: \n")
+    log.log(f"{model.getModelWeights()}")
     # Indicate success.
     return True
 

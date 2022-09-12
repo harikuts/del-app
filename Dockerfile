@@ -23,6 +23,8 @@ RUN python3 -m pip install --upgrade pip
 # RUN python3 -m pip install -r requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+RUN pip show torch
+RUN pip show torchvision
 
 # Create app directory.
 WORKDIR /app

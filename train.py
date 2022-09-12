@@ -12,7 +12,7 @@ import asyncio
 import random
 import datetime
 # Import the learning and logging packages.
-from learn import Model, Data
+from learn import Model, DataFashion, DataMNIST
 from simlog import Log
 from aggregate import aggregate
 
@@ -35,14 +35,14 @@ def main():
         log.log(f"\tTraining model for {NUM_EPOCHS} epochs...")
         for i in range(1, NUM_EPOCHS+1):
             log.log(f"ROUND {round_counter}: EPOCH {i}")
-            model.train(Data(DATA_PATH, log=log).train_dataloader)
-            model.test(Data(DATA_PATH, log=log).test_dataloader)
+            model.train(DataFashion(DATA_PATH, log=log).train_dataloader)
+            model.test(DataFashion(DATA_PATH, log=log).test_dataloader)
             # Publish message to both the outbox and the current model.
         log.log("\tPublishing model update...")
         model.save(MODEL_PATH)
         model.save(PUBLISHED_MODEL_PATH)
         log.log("\tTraining done.\nPost-training results are below.")
-        model.test(Data(DATA_PATH, log=log).test_dataloader)
+        model.test(DataFashion(DATA_PATH, log=log).test_dataloader)
         # Now wait for the an aggregated model to show up.
         while True:
             try:
@@ -55,7 +55,7 @@ def main():
                 # Test the aggregated model.
                 log.log(f"Post-aggregation testing results are below.")
                 model.load(MODEL_PATH)
-                model.test(Data(DATA_PATH, log=log).test_dataloader)
+                model.test(DataFashion(DATA_PATH, log=log).test_dataloader)
                 break
             except FileNotFoundError:
                 # Else wait a bit, then try again.

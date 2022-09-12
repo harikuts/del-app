@@ -160,10 +160,13 @@ class torch_Model():
             self.display = print
 
         # Instantiate the model.
+        self.model = self.FashionCNN()
+        """
         if RUN_MNIST:
             self.model = self.SimpleModel_MNIST(28*28, 256, 10)
         else:
             self.model = self.FashionCNN()
+        """
 
         if load_path is not None:
             # If load file is provided, load model from there.
@@ -258,6 +261,9 @@ class torch_Model():
 
         return these_weights
 
+    def getModelWeights(self):
+        return self.model.state_dict()
+
 # Dataset class.
 class torch_FashionMNIST:
     #Custom Dataset class:
@@ -290,7 +296,14 @@ class torch_FashionMNIST:
             return len(self.images)
 
 
-    def __init__(self, filename:str, split:float=0.8): 
+    def __init__(self, filename:str, split:float=0.8, log:simlog.Log=None): 
+        
+        if log is not None:
+            self.display = log.log
+        else:
+            self.display = print
+        self.display(f"Loading file from: {filename}")
+
         train_csv = pd.read_csv(filename)
         test_csv = pd.read_csv("./data_repo/fashion-mnist_test.csv")
 
@@ -352,7 +365,7 @@ class Model(torch_Model):
         super().__init__(path, log=log)
 class DataFashion(torch_FashionMNIST):
     def __init__(self, path=None, log=None):
-            super().__init__(path)
+            super().__init__(path, log=log)
 class DataMNIST(torch_MNIST): 
     def __init(self, path=None, log=None):
         super().__init__(path, log=log)

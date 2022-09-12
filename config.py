@@ -5,7 +5,7 @@ PORT = 1245
 DATASIZE = 1024
 
 # Training and aggregation.
-NUM_EPOCHS = 10
+NUM_EPOCHS = 2
 AGGREGATION_QUOTA = 2
 
 # List of node addresses.
@@ -15,7 +15,7 @@ NODELIST_FN = "nodelist.txt"
 MODEL_FN = "model.torch"
 DATA_FN = "client.data"
 # Path to access data.
-DATA_PATH = os.path.join(os.getcwd(), "data", "client.data")
+DATA_PATH = os.path.join(os.getcwd(), "data", "fashion-mnist.csv")
 # Path to access your own model.
 MODEL_PATH = os.path.join(os.getcwd(), "model.torch")
 # Paths to publish your model updates.
