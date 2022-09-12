@@ -290,7 +290,12 @@ class torch_FashionMNIST:
             return len(self.images)
 
 
-    def __init__(self, filename:str, split:float=0.8): 
+    def __init__(self, filename:str, split:float=0.8, log:simlog.Log=None): 
+        if log is not None:
+            self.display = log.log
+        else:
+            self.display = print
+        self.display(f"Loading file from: {filename}")
         train_csv = pd.read_csv(filename)
         test_csv = pd.read_csv("./data_repo/fashion-mnist_test.csv")
 
@@ -352,7 +357,7 @@ class Model(torch_Model):
         super().__init__(path, log=log)
 class DataFashion(torch_FashionMNIST):
     def __init__(self, path=None, log=None):
-            super().__init__(path)
+            super().__init__(path, log=log)
 class DataMNIST(torch_MNIST): 
     def __init(self, path=None, log=None):
         super().__init__(path, log=log)
