@@ -15,7 +15,7 @@ NODELIST_FN = "nodelist.txt"
 MODEL_FN = "model.torch"
 DATA_FN = "client.data"
 # Path to access data.
-DATA_PATH = os.path.join(os.getcwd(), "data", "client.data")
+DATA_PATH = os.path.join(os.getcwd(), "data", "fashion-mnist.csv")
 # Path to access your own model.
 MODEL_PATH = os.path.join(os.getcwd(), "model.torch")
 # Paths to publish your model updates.

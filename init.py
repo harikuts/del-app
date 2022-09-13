@@ -10,6 +10,8 @@ from simlog import Log
 from config import NODELIST_FN
 
 def main():
+    # Create logs directory here.
+    os.mkdir(os.path.join(os.getcwd(), "logs"))
     log = Log("INIT", os.path.join(os.getcwd(), "logs", "init.log"))
     log.log("Initializing...")
 

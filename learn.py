@@ -160,10 +160,13 @@ class torch_Model():
             self.display = print
 
         # Instantiate the model.
+        self.model = self.FashionCNN()
+        """
         if RUN_MNIST:
             self.model = self.SimpleModel_MNIST(28*28, 256, 10)
         else:
             self.model = self.FashionCNN()
+        """
 
         if load_path is not None:
             # If load file is provided, load model from there.
@@ -296,8 +299,20 @@ class torch_FashionMNIST:
         else:
             self.display = print
         self.display(f"Loading file from: {filename}")
+
         train_csv = pd.read_csv(filename)
         test_csv = pd.read_csv("./data_repo/fashion-mnist_test.csv")
+
+        """
+        with open(filename, 'rb') as f:
+            result = chardet.detect(f.readline())
+        train_csv = pd.read_csv(filename, encoding=result['encoding'])
+
+        with open("./data_repo/fashion-mnist_test.csv", 'rb') as f:
+            result = chardet.detect(f.readline())
+
+        test_csv = pd.read_csv("./data_repo/fashion-mnist_test.csv", encoding=result['encoding']
+        """
 
         self.train_dataset = self.torch_fashion(train_csv, transform=transforms.Compose([transforms.ToTensor()]))
         self.test_dataset = self.torch_fashion(test_csv, transform=transforms.Compose([transforms.ToTensor()]))
